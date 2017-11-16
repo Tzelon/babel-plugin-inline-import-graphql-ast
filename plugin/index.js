@@ -27,7 +27,8 @@ export default ({ types: t }) => ({
 
         function buildInlineVariableAST (graphqlAST) {
           const inlineVarName = curPath.node.specifiers[0].local.name
-          return parse(`const ${inlineVarName} = ${JSON.stringify(graphqlAST)}`).program.body
+          const inlineVarStatement = `const ${inlineVarName} = ${JSON.stringify(graphqlAST)};${EOL}`
+          return parse(inlineVarStatement).program.body
         }
       }
     }
