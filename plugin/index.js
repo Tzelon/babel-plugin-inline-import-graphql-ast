@@ -1,7 +1,8 @@
 import path, { dirname } from 'path'
 import { EOL } from 'os'
 import { readFileSync } from 'fs'
-import { parse } from 'babylon'
+import template from 'babel-template'
+import { parseExpression } from 'babylon'
 import gql from 'graphql-tag'
 
 let resolve
@@ -22,13 +23,18 @@ export default ({ types: t }) => ({
           query.parse()
           query.dedupeFragments()
           query.makeSourceEnumerable()
-          curPath.replaceWithMultiple(buildInlineVariableAST(query.ast))
+          curPath.replaceWith(buildInlineVariableAST(query.ast))
         }
 
         function buildInlineVariableAST (graphqlAST) {
-          const inlineVarName = curPath.node.specifiers[0].local.name
-          const inlineVarStatement = `const ${inlineVarName} = ${JSON.stringify(graphqlAST)};${EOL}`
-          return parse(inlineVarStatement).program.body
+          const buildAST = template(`
+            const QUERY_NAME = GQL_AST;
+          `)
+
+          return buildAST({
+            QUERY_NAME: t.identifier(curPath.node.specifiers[0].local.name),
+            GQL_AST: parseExpression(JSON.stringify(graphqlAST))
+          })
         }
       }
     }
